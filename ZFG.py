@@ -48,70 +48,58 @@ class ZeroGeneratorApp:
         frame = ttk.Frame(root, padding=16)
         frame.grid(row=0, column=0, sticky="nsew")
 
+        self.size_var = tk.StringVar()
+        ttk.Label(frame, textvariable=self.size_var).grid(
+            row=0, column=0, sticky="w", padx=(0, 8), pady=(0, 6)
+        )
+
         ttk.Label(
             frame,
             text="Number of '0' characters (1 to 80 nonillion):",
-        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        ).grid(row=0, column=1, sticky="w", pady=(0, 6))
 
         self.count_var = tk.StringVar(value="8000000")
         self.count_var.trace_add("write", self.on_count_change)
-        self.entry = ttk.Entry(frame, textvariable=self.count_var, width=38)
-        self.entry.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+        self.entry = ttk.Entry(frame, textvariable=self.count_var, width=48)
+        self.entry.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
         self.entry.focus()
 
-        self.size_var = tk.StringVar()
-        ttk.Label(frame, textvariable=self.size_var).grid(
-            row=2, column=0, columnspan=2, sticky="w", pady=(0, 10)
-        )
-
         self.progress = ttk.Progressbar(
-            frame, orient="horizontal", length=290, mode="determinate"
+            frame, orient="horizontal", length=340, mode="determinate"
         )
-        self.progress.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+        self.progress.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 6))
 
         self.status_var = tk.StringVar(value="Enter a count and click Generate.")
         ttk.Label(frame, textvariable=self.status_var).grid(
-            row=4, column=0, columnspan=2, sticky="w", pady=(0, 12)
+            row=3, column=0, columnspan=2, sticky="w", pady=(0, 12)
         )
 
         self.generate_btn = ttk.Button(frame, text="Generate", command=self.on_generate)
-        self.generate_btn.grid(row=5, column=0, sticky="ew", padx=(0, 6))
+        self.generate_btn.grid(row=4, column=0, sticky="ew", padx=(0, 6))
 
         ttk.Button(frame, text="Cancel", command=self.root.destroy).grid(
-            row=5, column=1, sticky="ew"
+            row=4, column=1, sticky="ew"
         )
 
         self.update_size_preview()
 
-    def parse_count_quiet(self) -> Optional[int]:
-        raw = self.count_var.get().replace(",", "").replace("_", "").strip()
-        if not raw:
-            return None
-        try:
-            count = int(raw)
-        except ValueError:
-            return None
-        if count < MIN_ZEROS or count > MAX_ZEROS:
-            return None
-        return count
-
     def update_size_preview(self) -> None:
         raw = self.count_var.get().replace(",", "").replace("_", "").strip()
         if not raw:
-            self.size_var.set("Space needed: —")
+            self.size_var.set("[—]")
             return
         try:
             count = int(raw)
         except ValueError:
-            self.size_var.set("Space needed: invalid number")
+            self.size_var.set("[Invalid]")
             return
 
         if count < MIN_ZEROS or count > MAX_ZEROS:
-            self.size_var.set("Space needed: out of range (1 – 80 nonillion)")
+            self.size_var.set("[Out of range]")
             return
 
         approx = format_approx_size(count)
-        self.size_var.set(f"Space needed: ~{approx} ({count:,} bytes)")
+        self.size_var.set(f"[~{approx}]")
 
     def on_count_change(self, *_args) -> None:
         self.update_size_preview()
@@ -144,12 +132,10 @@ class ZeroGeneratorApp:
         if count is None:
             return
 
-        approx = format_approx_size(count)
         proceed = messagebox.askyesno(
             title="Warning: File Creation",
             message=(
-                f"This will create a text file containing {count:,} zeros "
-                f"(approx. {approx} / {count:,} bytes of disk space).\n\n"
+                f"This will create a text file containing {count:,} zeros.\n\n"
                 f"Target location:\n{self.target}\n\n"
                 "Do you want to continue?"
             ),
